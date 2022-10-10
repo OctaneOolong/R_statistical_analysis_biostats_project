@@ -7,10 +7,10 @@ output: html_document
 ```{r include=FALSE}
 library(tidyverse)
 library(gridExtra)
-data <- load("mumble_data.RData")
-ls()
-```
 
+# Use rio package to import the .RData file and use general variable name "data".
+data <- rio::import("mumble_data.RData")
+```
 
 ```{r add-unique-ID, include=FALSE}
 data <-
