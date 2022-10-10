@@ -1,0 +1,309 @@
+---
+title: "Biostats A3 Q2"
+author: "Jonathan Stathakis"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+RQ: "Is there a relationship between BMI and log_los in patients of Mumble, Wisteria after correcting for number of comorbidities? Can we describe the relationship?"
+
+1.  What is the variable under study? Numerical or categorical?
+
+BMI and log_los.
+
+1.  How many groups are being studied?
+
+*1 group, the population of patients admitted to hospital with SARS-CoV-2 in Mumble, Wisteria.*
+
+1 Does RQ have a binary response or numerical? Hypothesis test or confidence intervals? Is it looking for an association between measurements or different groups?
+
+*RQ has a binary response. We are looking for an association between measurements on a single group, BMI and log_los.*
+
+2 What assumptions can be made? Are they dependent or independent groups?
+
+*We can assume that the participants are independent as the BMI, log_los and comorbidities would have little chance of being relate.*
+
+3 Is the data normally distributed? Is there equal variance between populations of comparison?
+
+*Based on the histograms of BMI and log_los below, there are some outliers but overall the data is normally distributed. As we are looking at one group, variation between groups is not a concern. 4*
+
+4 What is the form of the descriptive analysis?
+
+*As BMI and log_los are normally distributed we will use mean/SD to describe them. counts/prop will be used to describe comorb.*
+
+5 What is the form of the statistical inference?
+
+*We will look for correlation from a scatter plot of BMI vs log_los while integrating comorb. We will summarise it with R2.*
+
+```{r}
+library(tidyverse)
+library(gridExtra)
+data = load("datafor16813104.Rdata", )
+ls()
+```
+
+```{r add-unique-ID}
+mumble = 
+  mumble %>%
+    mutate(row_ID = row_number())%>%
+      relocate(row_ID, 1)
+```
+
+# Descriptive Analysis
+
+First thing we should do is investigate the distribution of the continuous variables as well as see whether the variance is equal between the comorbidity categories.
+
+To investigate whether the log_los was dependent on patient BMI when accounting for comorbidities, we undertook a multivariate regression analysis.This study consistsed of 500 participants admitted to hospital with SARS-CoV-2 in Mumble, Wisteria.
+
+```{r distributions-of-data}
+BMI_hist = 
+  mumble %>% 
+    select(BMI) %>%
+    ggplot(aes(BMI)) + 
+    geom_histogram()+
+    labs(
+      title = 'Histogram of BMI'
+    ) +
+    ylab('Frequency')
+    
+
+log_los_hist = 
+  mumble %>%
+    select(log_los) %>%
+      ggplot(aes(log_los))+
+      geom_histogram()+
+  labs(
+    title = 'Histogram of the Logarithm of LOS'
+  )+
+ylab('Frequency')
+
+log_los_hist
+BMI_hist
+```
+
+the continuous variables log_los and BMI appear to be roughly normally distributed, except for \~20 log_los outliers at 0.5 log_los, which I will consider removing from the study.
+
+```{r}
+print(summary(mumble$log_los))
+print(summary(mumble$BMI))
+print(sd(mumble$log_los))
+print(sd(mumble$BMI))
+```
+
+Log_los ranged from 0.6931 to 3.6376, with a mean value of 2.2626 and SD of 0.5726618. BMI ranged from 15.00 to 53.00 with a mean value of 33.96 and SD of 5.564365.
+
+```{r statistics-of-data}
+# mean, sd, table.
+
+comorb_table =
+  mumble %>%
+  select(comorb)%>% 
+  table
+  
+comorb_table
+
+mumble %>%
+  select(comorb) %>%
+  prop.table(.)
+```
+
+```{r comorb-bar-plot}
+comorb_bar =
+  mumble %>%
+    select(comorb) %>%
+      ggplot(aes(comorb)) +
+      geom_bar()+
+      xlab('Number of Comorbidities')+
+      ylab('Frequency')+
+      labs(
+        title = 'Bar Plot of Comorbidity Categories'
+      )
+
+comorb_bar
+
+```
+
+```{r}
+?labs()
+```
+
+Patient comorbidities were stratified into three categories, 'nil' 209 (41.8%), '1-2 comorbidities' 172 (34.4%), and '3+ comorbidities' 119 (23.8%).
+
+```{r log_los-outliers}
+out <- boxplot.stats(mumble$log_los)$out
+out_ind <- which(mumble$log_los %in% c(out))
+out_ind
+
+log_los_outliers = mumble[out_ind,]
+```
+
+```{r BMI-outliers}
+out <- boxplot.stats(mumble$BMI)$out
+out_ind <- which(mumble$BMI %in% c(out))
+
+BMI_outliers = mumble[out_ind,]
+BMI_outliers
+```
+
+```{r}
+not_common_outliers = intersect(log_los_outliers[1], BMI_outliers[1])
+not_common_outliers
+```
+
+Now that I have identified the outliers..
+
+# Regression Models and Inferential Analysis
+
+## Scatter plot
+
+As first level investigative analysis, we observe a scatter plot of log_los against BMI. If the three comorb groups are distinctly clustered, then we can estimte the correlation as the R\^2 value for a line fitted to that cluster.
+
+```{r log_los-BMI-comorb-scatter}
+custom_col <- c( "#52854C", "#D16103", "#293352")
+scatter = 
+  mumble %>%
+  ggplot(aes(BMI, log_los, color = comorb))+
+  geom_point() + scale_color_manual(values = custom_col)
+
+scatter
+```
+
+As we can see, there is no obvious patterns distinguishing either comorbidity category, however it does appear th![](http://127.0.0.1:29395/chunk_output/E89FA0A06BBA76A0/6FF118A8/cck71py3yucrf/000010.png)at the 3+ comorbidities is concentrated at higher values than the other two groups.
+
+```{r scatter-BMI-log_los}
+
+scatter_BMI_log_los_nil = 
+  mumble%>%
+  filter(comorb == 'nil') %>%
+  ggplot(aes(BMI, log_los))+
+    geom_point() +
+    labs(title = 'nil')
+
+scatter_BMI_log_los_1_2 = 
+  mumble %>%
+  filter(comorb == '1-2 comorbidities') %>%
+  ggplot(aes(BMI, log_los))+
+  geom_point()+ 
+  labs(title = '1 - 2+ comorbidities')
+
+scatter_BMI_log_los_3 = 
+  mumble %>%
+  filter(comorb == '3+ comorbidities') %>%
+  ggplot(aes(BMI, log_los))+
+  geom_point() +
+  labs (title = '3+ comorbidities')
+
+print(scatter_BMI_log_los_nil)
+print(scatter_BMI_log_los_1_2)
+print(scatter_BMI_log_los_3)
+#grid.arrange(scatter_BMI_log_los_nil, scatter_BMI_log_los_1_2, scatter_BMI_log_los_3)
+```
+
+As a first observation of the data, scatter plots of log_los vs. BMI was plotted for each comorbidity subpopulation. With increasing comorbidities, we observed an increasingly positive association with tighter clustering.
+
+## Regression Model
+
+```{r regression-model}
+model = mumble %>%
+lm(formula = log_los ~ BMI + comorb, .)
+
+model
+summary(model)
+```
+
+```{r}
+library(sjPlot)
+library(sjmisc)
+library(sjlabelled)
+```
+
+```{r}
+tab <- tab_model(model, auto.label = FALSE)
+tab
+```
+
+The nil category has been chosen as a reference for the other two. To create a regression model from the comorb categorical variable, we create dummy variables for the two other categories, '1-2 comorbidities' and '3+ comorbidities' which are set to zero if the predicted individual does not belong to that group. The coefficients of these variables describes the difference between that group and the reference group, 'nil',
+
+From these results we can see that when accounting for comorbidities, BMI and 1-2 comorbidities are statistically insignificant, wheras the Intercept and '3+ comorbidities' coefficient are statistically significant in predicting log_los. These values are found in reference to the 'nil comorbidities' category. This can be interpreted as meaning that BMI is has a non-significant association with log_los, and that in reference to 'nil' comorbidities, '1-2 comorbidities' is also non-significant, however, in patients with '3+ comorbidities', these comorbidities have a statistically significant effect.
+
+The multivariate regression model can be expressed as:
+
+$$
+\text(log los) = 1.945120 + 0.007008(BMI) + 0.063200 ('1-2 comorb') + 0.242481('3+ comorb').
+$$
+
+To see whether this relationship applies to the general population, we will perform hypothesis tests.
+
+$$
+H_0:\beta_0=0
+$$
+
+$$H_1: \beta_0 \ne 0 $$
+
+The null hypothesis is that if log_los, when accounting for comorbidities, had no association with BMI, the regression model intercept would equal zero. That is, for a patient with a BMI of zero, their log_los would equal zero, or 1 day. Obviously a BMI value of zero is impossible, thus this hypothesis test will be discarded as its results cannot apply to a population of living human beings.
+
+The other hypothesis test we can apply looks at the population slope. If log_los had no association with BMI, its coefficient would equal zero, and the curve would run parallel to to the x-axis. Formally:
+
+$$
+H_0:\beta_1 = 0
+$$
+
+$$
+H_1:\beta_1 \ne 0
+$$
+
+As the BMI coefficient = 0.007008, we can see that the null hypothesis can be rejected.
+
+```{r BMI-log_los-model}
+BMI_model = mumble %>%
+  lm(formula = log_los ~ BMI)%>%
+  summary
+
+BMI_model
+```
+
+```{r BMI-nil-model}
+mumble %>%
+  filter(comorb == 'nil') %>%
+  lm(formula=  log_los ~ BMI ) %>%
+  summary
+```
+
+```{r BMI-1-2-model}
+mumble %>%
+  filter(comorb == '1-2 comorbidities') %>%
+  lm(formula=  log_los ~ BMI ) %>%
+  summary
+```
+
+```{r BMI-3+-model }
+mumble %>%
+  filter(comorb == '3+ comorbidities') %>%
+  lm(formula=  log_los ~ BMI ) %>%
+  summary
+```
+
+# Hypothesis Test
+
+To test whether the regression model applies to the wider population, we form a hypothesis test.
+
+## 1 Set Up Hypotheses and Determine Level of Significance.
+
+## 2 Select Test Statistic.
+
+The test statistic will be the population slope.
+
+## 3 Setup Decision Rule.
+
+If the slope is not equal to zero, the null hypothesis can be rejected.
+
+## 4 Compute the Test Statistic.
+
+## 5 Conclusion.
+
+```{r}
+ggplot(mumble, aes(y = log_los, x = BMI, col = comorb))+
+  geom_point() +
+  geom_smooth(method = model)
+  
+```
