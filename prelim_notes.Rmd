@@ -10,32 +10,32 @@ output: html_document
 
 \-\--
 
-RQ: "Is there a relationship between BMI and log_los in patients of data, Wisteria after correcting for number of comorbidities? Can we describe the relationship?"
+RQ: "Is there a relationship between BMI and log_los in patients of Mumble, Wisteria after correcting for number of comorbidities? Can we describe the relationship?"
 
 1\. What is the variable under study? Numerical or categorical?
 
-BMI and log_los.
+*BMI and log_los, both numerical variables.*
 
-1\. How many groups are being studied?
+m1. How many groups are being studied?
 
-\*1 group, the population of patients admitted to hospital with SARS-CoV-2 in data, Wisteria.\*
+\*1 group, a sample of patients admitted to hospital with SARS-CoV-2 in data, Wisteria.\*
 
 1 Does RQ have a binary response or numerical? Hypothesis test or confidence intervals? Is it looking for an association between measurements or different groups?
 
-\*RQ has a binary response. We are looking for an association between measurements on a single group, BMI and log_los.\*
+*RQ has a binary response. We are looking for an association between measurements on a single group, BMI and log_los, which will be identified using a hypothesis test*.
 
 2 What assumptions can be made? Are they dependent or independent groups?
 
-\*We can assume that the participants are independent as the BMI, log_los and comorbidities would have little chance of being relate.\*
+*We can assume that the participants are independent as the BMI, log_los and comorbidities would have little chance of being related.*
 
 3 Is the data normally distributed? Is there equal variance between populations of comparison?
 
-\*Based on the histograms of BMI and log_los below, there are some outliers but overall the data is normally distributed. As we are looking at one group, variation between groups is not a concern. 4\*
+*Based on the histograms of BMI and log_los below, there are some outliers but overall the data is normally distributed. As we are looking at one group, variation between groups is not a concern.*
 
 4 What is the form of the descriptive analysis?
 
-\*As BMI and log_los are normally distributed we will use mean/SD to describe them. counts/prop will be used to describe comorb.\*
+*As BMI and log_los are normally distributed we will use mean/SD to describe them. counts/prop will be used to describe comorb.*
 
 5 What is the form of the statistical inference?
 
-\*We will look for correlation from a scatter plot of BMI vs log_los while integrating comorb. We will summarise it with R2.\*
+*We will look for correlation from a scatter plot of BMI vs log_los while integrating comorb. We will summarise it with R2.*

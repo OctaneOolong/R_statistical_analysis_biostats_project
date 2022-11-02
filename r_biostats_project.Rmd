@@ -4,9 +4,11 @@ author: "Jonathan Stathakis"
 date: "`r Sys.Date()`"
 output: html_document
 ---
+
 ```{r include=FALSE}
 library(tidyverse)
 library(gridExtra)
+library(skimr)
 
 # Use rio package to import the .RData file and use general variable name "data".
 data <- rio::import("mumble_data.RData")
@@ -21,7 +23,7 @@ data <-
 
 # Descriptive Analysis
 
-First thing we should do is investigate the distribution of the continuous variables as well as see whether the variance is equal between the comorbidity categories.
+First thing we should do is investigate the distribution of the log_los and BMI whether variance is consistent within the comorbidity categories.
 
 To investigate whether the log_los was dependent on patient BMI when accounting for comorbidities, we undertook a multivariate regression analysis.This study consistsed of 500 participants admitted to hospital with SARS-CoV-2 in data, Wisteria.
 
@@ -54,8 +56,11 @@ the continuous variables log_los and BMI appear to be roughly normally distribut
 
 ```{r}
 print(summary(data$log_los))
-print(summary(data$BMI))
 print(sd(data$log_los))
+```
+
+```{r}
+print(summary(data$BMI))
 print(sd(data$BMI))
 ```
 
@@ -73,7 +78,7 @@ comorb_table
 
 data %>%
   select(comorb) %>%
-  prop.tabled(.)
+  prop.table(.)
 ```
 
 ```{r comorb-bar-plot}
